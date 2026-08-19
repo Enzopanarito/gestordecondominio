@@ -2,15 +2,9 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "env": {
-    "VLA_DATA_ENVIRONMENT": "staging",
-    "VLA_FAILOVER_WRITE_MODE": "disabled",
-    "AIRTABLE_BASE_ID": "appZhq8nVZ7lZ2k6K"
-  },
   "functions": {
     "api/**/*.js": {
-      "maxDuration": 60,
-      "memory": 1024
+      "maxDuration": 60
     }
   },
   "rewrites": [

@@ -26,6 +26,18 @@ function mockSdk(){
   };
 }
 
+test('100 veces: defaults ausentes quedan en STAGING exacto y escrituras disabled',()=>{
+  for(let i=0;i<100;i++){
+    assert.equal(guard.effectiveDataEnvironment({}),'staging');
+    assert.equal(guard.effectiveBaseId({}),'appZhq8nVZ7lZ2k6K');
+    assert.equal(guard.effectiveWriteMode({}),'disabled');
+    const read=guard.authorize('public-data',{});
+    assert.equal(read.allowed,true);assert.equal(read.write,false);assert.equal(read.mode,'disabled');assert.equal(read.dataEnv,'staging');assert.equal(read.base,lock.stagingBaseId);
+    assert.throws(()=>guard.authorize('public-report-payment',{}),error=>error.code==='FAILOVER_WRITES_DISABLED');
+    assert.throws(()=>guard.validateBasePair({VLA_DATA_ENVIRONMENT:'production'}),error=>error.code==='FAILOVER_PRODUCTION_BASE_MISMATCH');
+  }
+});
+
 test('100 veces: staging permite escrituras solo contra la base ficticia exacta',()=>{
   for(let i=0;i<100;i++){
     const ok=guard.authorize('admin-manual-payment',stagingEnv());
