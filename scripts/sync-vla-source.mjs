@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 
-const ROOT=path.resolve(new URL('..',import.meta.url).pathname,'..');
+const ROOT=path.resolve(path.dirname(new URL(import.meta.url).pathname),'..');
 const lock=JSON.parse(fs.readFileSync(path.join(ROOT,'vla-source-lock.json'),'utf8'));
 const VENDOR=path.join(ROOT,'.vendor','vla');
 const GENERATED=path.join(ROOT,'.generated');
