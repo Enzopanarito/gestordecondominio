@@ -39,13 +39,13 @@ node -e "console.log(require('./lib/failover-guard.cjs').activationFingerprint()
 
 No se trata como contraseña. Es una barrera contra activación accidental. Los secretos reales siguen siendo Airtable, Admin, cifrado, Blob, SMTP y MKJ.
 
-## 3. Creación inicial del proyecto Vercel
+## 3. Proyecto Vercel
 
-Nombre reservado recomendado: `villa-los-apamates-backup`.
+Proyecto reservado y creado: `vla-failover`.
 
-Conectar exclusivamente el repositorio `Enzopanarito/gestordecondominio` y desplegar inicialmente la rama `failover/vla-standalone-2026-08-19`.
+Conectado exclusivamente al repositorio `Enzopanarito/gestordecondominio`. La certificación inicial debe hacerse desde la rama `failover/vla-standalone-2026-08-19` antes de promover el código a `main` de este repositorio separado.
 
-Configuración inicial:
+Configuración:
 - Framework preset: Other / sin framework.
 - Root directory: raíz del repositorio.
 - Build command: `npm run build` (también está fijado en `vercel.json`).
