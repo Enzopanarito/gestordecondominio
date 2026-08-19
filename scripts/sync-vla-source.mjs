@@ -14,7 +14,7 @@ export const HANDLERS=Object.freeze([
   '_admin_payment_proof','payment-proof-prefill','payment-report-analyzer-background',
   'process-payment-report','send-receipt','resend-receipt','receipt-recovery-background',
   'mkj-access','access-mode','access-auto-sync','access-reconciliation-readonly',
-  'bcv-rate','bcv-refresh','system-health','app-icon'
+  'bcv-rate','system-health','app-icon'
 ]);
 
 export const PUBLIC_FILES=Object.freeze([
