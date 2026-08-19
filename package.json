@@ -5,7 +5,7 @@
   "engines": { "node": ">=24 <25" },
   "scripts": {
     "sync:vla": "node scripts/sync-vla-source.mjs",
-    "build:static": "node scripts/build-failover.mjs",
+    "build:static": "node scripts/build-failover.mjs && node scripts/harden-failover-ui.mjs",
     "build": "npm run sync:vla && npm run build:static",
     "test": "npm run sync:vla && node --test tests/*.test.js",
     "verify": "npm test && npm run build:static"
