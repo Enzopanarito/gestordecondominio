@@ -1,0 +1,20 @@
+{
+  "name": "villa-los-apamates-failover",
+  "private": true,
+  "version": "1.0.0",
+  "engines": { "node": ">=24 <25" },
+  "scripts": {
+    "sync:vla": "node scripts/sync-vla-source.mjs",
+    "build:static": "node scripts/build-failover.mjs",
+    "build": "npm run sync:vla && npm run build:static",
+    "test": "npm run sync:vla && node --test tests/*.test.js",
+    "verify": "npm test && npm run build:static"
+  },
+  "dependencies": {
+    "@vercel/blob": "^2.0.0",
+    "nodemailer": "^9.0.3",
+    "pdfkit": "^0.15.0",
+    "sharp": "^0.35.3",
+    "tailwindcss": "^3.4.17"
+  }
+}
