@@ -1,0 +1,13 @@
+{
+  "schema": "vla-failover-source-lock-v1",
+  "sourceRepository": "Enzopanarito/portaldelpropietario",
+  "sourceCommit": "6d2b9d05fc3e7f69361d11dbb00988e9c97f4c25",
+  "sourceRelease": "2026-08-15-v13",
+  "productionBaseId": "app4nE4ReGRi2SuP2",
+  "stagingBaseId": "appZhq8nVZ7lZ2k6K",
+  "expectedHouses": 15,
+  "defaultDataEnvironment": "staging",
+  "writesDefault": "disabled",
+  "whatsapp": "external-not-migrated",
+  "monthlyClose": "blocked-in-failover-v1"
+}
