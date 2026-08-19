@@ -12,7 +12,7 @@ export const HANDLERS=Object.freeze([
   'public-data','login','admin-data','admin-security','admin-manual-payment',
   'public-report-payment','public-payment-report-status','public-payment-report-supplement',
   '_admin_payment_proof','payment-proof-prefill','payment-report-analyzer-background',
-  'process-payment-report','send-receipt','resend-receipt','receipt-recovery',
+  'process-payment-report','send-receipt','resend-receipt','receipt-recovery-background',
   'mkj-access','access-mode','access-auto-sync','access-reconciliation-readonly',
   'bcv-rate','bcv-refresh','system-health','app-icon'
 ]);
