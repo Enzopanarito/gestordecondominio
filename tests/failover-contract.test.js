@@ -8,6 +8,7 @@ const {Readable}=require('node:stream');
 const root=path.join(__dirname,'..');
 const lock=require('../vla-source-lock.json');
 const guard=require('../lib/failover-guard.cjs');
+const failoverPublicData=require('../lib/failover-public-data.cjs');
 const blob=require('../lib/vercel-blob-compat.cjs');
 const adapter=require('../lib/netlify-adapter.cjs');
 
@@ -36,6 +37,29 @@ test('100 veces: defaults ausentes quedan en STAGING exacto y escrituras disable
     assert.throws(()=>guard.authorize('public-report-payment',{}),error=>error.code==='FAILOVER_WRITES_DISABLED');
     assert.throws(()=>guard.validateBasePair({VLA_DATA_ENVIRONMENT:'production'}),error=>error.code==='FAILOVER_PRODUCTION_BASE_MISMATCH');
   }
+});
+
+test('100 veces: defaults seguros se materializan antes de cargar funciones VLA',()=>{
+  for(let i=0;i<100;i++){
+    const env={VERCEL_ENV:'production'};
+    const result=guard.materializeRuntimeDefaults(env);
+    assert.equal(result.dataEnv,'staging');assert.equal(result.base,lock.stagingBaseId);assert.equal(result.mode,'disabled');
+    assert.equal(env.VLA_DATA_ENVIRONMENT,'staging');assert.equal(env.AIRTABLE_BASE_ID,lock.stagingBaseId);assert.equal(env.VLA_FAILOVER_WRITE_MODE,'disabled');
+    assert.equal(guard.realStagingReadsEnabled(env),true);
+    const preview={VERCEL_ENV:'preview'};guard.materializeRuntimeDefaults(preview);assert.equal(guard.realStagingReadsEnabled(preview),false);
+    assert.throws(()=>guard.materializeRuntimeDefaults({VERCEL_ENV:'production',VLA_DATA_ENVIRONMENT:'production'}),error=>error.code==='FAILOVER_PRODUCTION_BASE_MISMATCH');
+  }
+});
+
+test('100 veces: Vercel Production lee STAGING real y Preview conserva fixture',()=>{
+  const snapshotEnv={VLA_DATA_ENVIRONMENT:'staging'};
+  for(let i=0;i<100;i++){
+    const production={VERCEL_ENV:'production',VLA_DATA_ENVIRONMENT:'staging',AIRTABLE_BASE_ID:lock.stagingBaseId,VLA_FAILOVER_WRITE_MODE:'disabled'};
+    const preview={VERCEL_ENV:'preview',VLA_DATA_ENVIRONMENT:'staging',AIRTABLE_BASE_ID:lock.stagingBaseId,VLA_FAILOVER_WRITE_MODE:'disabled'};
+    assert.equal(failoverPublicData.shouldUsePreviewFixture(snapshotEnv,production),false);
+    assert.equal(failoverPublicData.shouldUsePreviewFixture(snapshotEnv,preview),true);
+  }
+  assert.equal(typeof failoverPublicData.getHandler(),'function');
 });
 
 test('100 veces: staging permite escrituras solo contra la base ficticia exacta',()=>{
