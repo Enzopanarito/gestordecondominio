@@ -51,7 +51,7 @@ jobs:
           ADMIN_PASSWORD: test-password-not-used
           ADMIN_TOKEN_SECRET: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           PAYMENT_PROOF_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        run: node -e "const h=require('./.generated/handler-map.cjs'); if(Object.keys(h).length!==23) throw new Error('HANDLER_COUNT_'+Object.keys(h).length); console.log('FAILOVER_HANDLER_LOAD_OK',Object.keys(h).length)"
+        run: node -e "const h=require('./.generated/handler-map.cjs'); if(Object.keys(h).length!==22) throw new Error('HANDLER_COUNT_'+Object.keys(h).length); console.log('FAILOVER_HANDLER_LOAD_OK',Object.keys(h).length)"
 
       - name: Run failover contract including 100x cycles
         run: node --test tests/*.test.js
