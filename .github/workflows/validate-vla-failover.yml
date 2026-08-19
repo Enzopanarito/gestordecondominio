@@ -1,0 +1,88 @@
+name: Validate VLA Failover
+
+on:
+  push:
+    branches: [failover/vla-standalone-2026-08-19]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vla-failover-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          package-manager-cache: false
+
+      - name: Install exact isolated failover dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Sync exact certified VLA source
+        run: npm run sync:vla
+
+      - name: Verify vendored function syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          find .vendor/vla/netlify/functions -type f -name '*.js' -print0 | xargs -0 -n1 node --check
+          node --check lib/failover-guard.cjs
+          node --check lib/netlify-adapter.cjs
+          node --check lib/vercel-blob-compat.cjs
+          node --check 'api/netlify/[name].js'
+          node --check api/failover-health.js
+
+      - name: Load all critical handlers
+        env:
+          VLA_DATA_ENVIRONMENT: staging
+          VLA_FAILOVER_WRITE_MODE: disabled
+          AIRTABLE_BASE_ID: appZhq8nVZ7lZ2k6K
+          AIRTABLE_API_TOKEN: test-token-not-used
+          ADMIN_PASSWORD: test-password-not-used
+          ADMIN_TOKEN_SECRET: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          PAYMENT_PROOF_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        run: node -e "const h=require('./.generated/handler-map.cjs'); if(Object.keys(h).length!==22) throw new Error('HANDLER_COUNT_'+Object.keys(h).length); console.log('FAILOVER_HANDLER_LOAD_OK',Object.keys(h).length)"
+
+      - name: Run failover contract including 100x cycles
+        run: node --test tests/*.test.js
+
+      - name: Build independent static frontend
+        env:
+          VLA_DATA_ENVIRONMENT: staging
+          VLA_FAILOVER_WRITE_MODE: disabled
+        run: npm run build:static
+
+      - name: Verify static output is independent from Netlify Edge transforms
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s dist/index.html
+          test -s dist/admin.html
+          test -s dist/tailwind.generated.css
+          grep -q 'vla-owner-mobile-v2' dist/index.html
+          grep -q 'vla-admin-premium-v1' dist/admin.html
+          grep -q 'vla-admin-boot-style' dist/admin.html
+          grep -q 'vla-failover-runtime' dist/index.html
+          grep -q 'vla-failover-runtime' dist/admin.html
+          ! grep -q 'cdn.tailwindcss.com' dist/index.html
+          ! grep -q 'cdn.tailwindcss.com' dist/admin.html
+
+      - name: Ensure forbidden authorities are not routed
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! grep -q "map\['monthly-close'\]" .generated/handler-map.cjs
+          ! grep -qi "map\['whatsapp" .generated/handler-map.cjs
+
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
