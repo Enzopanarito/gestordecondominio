@@ -10,6 +10,8 @@
   "rewrites": [
     { "source": "/.netlify/functions/:name", "destination": "/api/netlify/:name" },
     { "source": "/api/vla/public-data", "destination": "/api/netlify/public-data" },
+    { "source": "/api/vla/plant", "destination": "/api/netlify/public-plant" },
+    { "source": "/api/vla/admin/plant", "destination": "/api/netlify/admin-plant" },
     { "source": "/api/vla/report-payment", "destination": "/api/netlify/public-report-payment" },
     { "source": "/api/vla/payment-reports/status", "destination": "/api/netlify/public-payment-report-status" },
     { "source": "/api/vla/payment-reports/supplement", "destination": "/api/netlify/public-payment-report-supplement" },

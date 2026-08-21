@@ -5,7 +5,7 @@ const {authorize,materializeRuntimeDefaults}=require('../../lib/failover-guard.c
 
 module.exports=async function(req,res){
   const name=String(req.query?.name||'').trim();
-  try{materializeRuntimeDefaults(process.env);authorize(name,process.env);}catch(error){
+  try{materializeRuntimeDefaults(process.env);authorize(name,process.env,req?.method);}catch(error){
     if(error?.code==='FAILOVER_MONTHLY_CLOSE_BLOCKED'||error?.code==='FAILOVER_WHATSAPP_BLOCKED'||String(error?.code||'').startsWith('FAILOVER_')){
       res.statusCode=503;res.setHeader('content-type','application/json; charset=utf-8');res.setHeader('cache-control','no-store');
       return res.end(JSON.stringify({message:error.message,code:error.code,function:name||null}));
