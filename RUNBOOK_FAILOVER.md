@@ -7,8 +7,8 @@ Nunca ejecutar cierre mensual, WhatsApp programado ni schedulers duplicados desd
 
 ## 1. Identidad certificada
 - Fuente VLA: `Enzopanarito/portaldelpropietario`
-- Commit fijado: `6d2b9d05fc3e7f69361d11dbb00988e9c97f4c25`
-- Release: `2026-08-15-v13`
+- Commit fijado: `92289cfc51bbd8f4e7eb437f6c3c1d01acca6f22`
+- Release: `2026-08-21-v15`
 - Producción Airtable: `app4nE4ReGRi2SuP2`
 - Staging ficticio: `appZhq8nVZ7lZ2k6K`
 - Casas esperadas: 15
@@ -43,7 +43,7 @@ No se trata como contraseña. Es una barrera contra activación accidental. Los 
 
 Proyecto reservado y creado: `vla-failover`.
 
-Conectado exclusivamente al repositorio `Enzopanarito/gestordecondominio`. La certificación inicial debe hacerse desde la rama `failover/vla-standalone-2026-08-19` antes de promover el código a `main` de este repositorio separado.
+Conectado exclusivamente al repositorio `Enzopanarito/gestordecondominio`. La certificación inicial debe hacerse desde una rama de sincronización antes de promover el código a `main` de este repositorio separado.
 
 Configuración:
 - Framework preset: Other / sin framework.
@@ -151,4 +151,4 @@ Como ambos entornos usan la misma fuente de datos en una contingencia real, no d
 - No habilitar WhatsApp desde Vercel.
 - No ejecutar cierre mensual desde Vercel v1.
 - No apuntar pruebas destructivas a `app4nE4ReGRi2SuP2`.
-- No considerar el Punto 2 certificado solo porque la página abre.
+- No considerar el failover certificado solo porque la página abre.
