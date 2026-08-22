@@ -18,9 +18,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: '24'
           package-manager-cache: false
@@ -51,7 +51,7 @@ jobs:
           ADMIN_PASSWORD: test-password-not-used
           ADMIN_TOKEN_SECRET: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           PAYMENT_PROOF_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        run: node -e "const h=require('./.generated/handler-map.cjs'); if(Object.keys(h).length!==22) throw new Error('HANDLER_COUNT_'+Object.keys(h).length); console.log('FAILOVER_HANDLER_LOAD_OK',Object.keys(h).length)"
+        run: node -e "const h=require('./.generated/handler-map.cjs'); if(Object.keys(h).length!==24) throw new Error('HANDLER_COUNT_'+Object.keys(h).length); console.log('FAILOVER_HANDLER_LOAD_OK',Object.keys(h).length)"
 
       - name: Run failover contract including 100x cycles
         run: node --test tests/*.test.js
