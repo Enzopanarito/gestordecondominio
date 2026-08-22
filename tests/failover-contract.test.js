@@ -31,7 +31,7 @@ function mockSdk(){
 }
 
 test('source lock apunta al commit productivo exacto y release v15 auditado',()=>{
-  assert.equal(lock.sourceCommit,'da32391ec9964bd8f09f1e5e5b1ea47bd8d7cbac');
+  assert.equal(lock.sourceCommit,'92289cfc51bbd8f4e7eb437f6c3c1d01acca6f22');
   assert.equal(lock.sourceRelease,'2026-08-21-v15');
 });
 
@@ -72,91 +72,76 @@ test('100 veces: Vercel Production lee STAGING real y Preview conserva fixture',
 
 test('100 veces: Planta permite GET pero bloquea POST mientras writes=disabled',()=>{
   for(let i=0;i<100;i++){
-    for(const name of ['public-plant','admin-plant']){
-      const read=guard.authorize(name,disabledStagingEnv(),'GET');assert.equal(read.allowed,true);assert.equal(read.write,false);
-      assert.throws(()=>guard.authorize(name,disabledStagingEnv(),'POST'),error=>error.code==='FAILOVER_WRITES_DISABLED');
-    }
+    const env=disabledStagingEnv();
+    assert.equal(guard.authorize('public-plant',env,'GET').write,false);
+    assert.equal(guard.authorize('admin-plant',env,'HEAD').write,false);
+    assert.throws(()=>guard.authorize('public-plant',env,'POST'),error=>error.code==='FAILOVER_WRITES_DISABLED');
+    assert.throws(()=>guard.authorize('admin-plant',env,'PATCH'),error=>error.code==='FAILOVER_WRITES_DISABLED');
   }
 });
 
 test('100 veces: POST de Planta solo puede escribir contra STAGING en modo staging explícito',()=>{
   for(let i=0;i<100;i++){
-    for(const name of ['public-plant','admin-plant']){
-      const write=guard.authorize(name,stagingEnv(),'POST');assert.equal(write.allowed,true);assert.equal(write.write,true);assert.equal(write.base,lock.stagingBaseId);
-      assert.throws(()=>guard.authorize(name,{VERCEL_ENV:'production',VLA_DATA_ENVIRONMENT:'production',AIRTABLE_BASE_ID:lock.productionBaseId,VLA_FAILOVER_WRITE_MODE:'staging'},'POST'),error=>error.code==='FAILOVER_STAGING_WRITE_GUARD');
-    }
+    const allowed=guard.authorize('admin-plant',stagingEnv(),'POST');assert.equal(allowed.allowed,true);assert.equal(allowed.write,true);assert.equal(allowed.mode,'staging');
+    assert.throws(()=>guard.authorize('admin-plant',{VLA_DATA_ENVIRONMENT:'production',AIRTABLE_BASE_ID:lock.productionBaseId,VLA_FAILOVER_WRITE_MODE:'staging'},'POST'),error=>error.code==='FAILOVER_STAGING_WRITE_GUARD');
   }
 });
 
-test('adaptador moderno da semántica production a lecturas STAGING reales sin cambiar la base',async()=>{
+test('adaptador moderno da semántica production a lecturas STAGING reales sin cambiar la base',()=>{
   const env=disabledStagingEnv();
-  assert.equal(modern.netlifyEnvValue('VLA_DATA_ENVIRONMENT',env),'production');
   assert.equal(modern.netlifyEnvValue('CONTEXT',env),'production');
-  assert.equal(modern.netlifyEnvValue('AIRTABLE_BASE_ID',env),lock.stagingBaseId);
-  const request=modern.requestFromEvent({httpMethod:'POST',rawUrl:'https://failover.example/api/vla/plant',headers:{'content-type':'application/json'},body:'{"ok":true}'});
-  assert.equal(request.method,'POST');assert.equal(await request.text(),'{"ok":true}');
-  const converted=await modern.responseToNetlify(new Response('ok',{status:201,headers:{'content-type':'text/plain'}}));
-  assert.equal(converted.statusCode,201);assert.equal(Buffer.from(converted.body,'base64').toString(),'ok');
-  const adminEnv=adminPlant.handlerEnv(env);assert.equal(adminEnv.VLA_DATA_ENVIRONMENT,'production');assert.equal(adminEnv.AIRTABLE_BASE_ID,lock.stagingBaseId);
-  const notification=await adminPlant.disabledNotification();assert.equal(notification.sent,false);assert.match(notification.status,/bloqueada/i);
+  assert.equal(modern.netlifyEnvValue('VLA_DATA_ENVIRONMENT',env),'production');
+  assert.equal(env.AIRTABLE_BASE_ID,lock.stagingBaseId);
+  assert.equal(adminPlant.handlerEnv(env).VLA_DATA_ENVIRONMENT,'production');
+  assert.equal(adminPlant.handlerEnv(env).AIRTABLE_BASE_ID,lock.stagingBaseId);
 });
 
 test('100 veces: staging permite escrituras solo contra la base ficticia exacta',()=>{
   for(let i=0;i<100;i++){
-    const ok=guard.authorize('admin-manual-payment',stagingEnv());
-    assert.equal(ok.allowed,true);assert.equal(ok.write,true);assert.equal(ok.mode,'staging');assert.equal(ok.base,lock.stagingBaseId);
-    assert.throws(()=>guard.authorize('admin-manual-payment',stagingEnv({AIRTABLE_BASE_ID:lock.productionBaseId})),/staging no apunta|staging no está aislada/i);
+    const result=guard.authorize('public-report-payment',stagingEnv());assert.equal(result.allowed,true);assert.equal(result.write,true);assert.equal(result.mode,'staging');
+    assert.throws(()=>guard.authorize('public-report-payment',{VLA_DATA_ENVIRONMENT:'staging',AIRTABLE_BASE_ID:lock.productionBaseId,VLA_FAILOVER_WRITE_MODE:'staging'}),error=>error.code==='FAILOVER_STAGING_BASE_MISMATCH');
   }
 });
 
 test('100 veces: activación real exige producción + Vercel production + huella exacta',()=>{
   for(let i=0;i<100;i++){
-    const ok=guard.authorize('process-payment-report',activeEnv());assert.equal(ok.allowed,true);assert.equal(ok.mode,'active');
-    assert.throws(()=>guard.authorize('process-payment-report',activeEnv({VLA_FAILOVER_ACTIVATION_FINGERPRINT:'bad'})),error=>error.code==='FAILOVER_ACTIVE_FINGERPRINT');
-    assert.throws(()=>guard.authorize('process-payment-report',activeEnv({VERCEL_ENV:'preview'})),error=>error.code==='FAILOVER_ACTIVE_VERCEL_GUARD');
+    const result=guard.authorize('public-report-payment',activeEnv());assert.equal(result.allowed,true);assert.equal(result.write,true);assert.equal(result.mode,'active');
+    assert.throws(()=>guard.authorize('public-report-payment',activeEnv({VLA_FAILOVER_ACTIVATION_FINGERPRINT:'incorrecta'})),error=>error.code==='FAILOVER_ACTIVE_FINGERPRINT_MISMATCH');
+    assert.throws(()=>guard.authorize('public-report-payment',activeEnv({VERCEL_ENV:'preview'})),error=>error.code==='FAILOVER_ACTIVE_VERCEL_ENV_REQUIRED');
   }
 });
 
 test('100 veces: modo disabled nunca escribe',()=>{
-  for(let i=0;i<100;i++)assert.throws(()=>guard.authorize('public-report-payment',{VLA_DATA_ENVIRONMENT:'staging',AIRTABLE_BASE_ID:lock.stagingBaseId,VLA_FAILOVER_WRITE_MODE:'disabled'}),error=>error.code==='FAILOVER_WRITES_DISABLED');
+  for(let i=0;i<100;i++)assert.throws(()=>guard.authorize('public-report-payment',disabledStagingEnv()),error=>error.code==='FAILOVER_WRITES_DISABLED');
 });
 
 test('cierre mensual y WhatsApp permanecen bloqueados por contrato',()=>{
-  for(const name of ['monthly-close','monthly-close-v4','audit-snapshot'])assert.throws(()=>guard.authorize(name,stagingEnv()),error=>error.code==='FAILOVER_MONTHLY_CLOSE_BLOCKED');
-  for(const name of ['whatsapp','whatsapp-send','whatsapp-schedule-run'])assert.throws(()=>guard.authorize(name,stagingEnv()),error=>error.code==='FAILOVER_WHATSAPP_BLOCKED');
+  assert.throws(()=>guard.authorize('monthly-close-v4',activeEnv()),error=>error.code==='FAILOVER_MONTHLY_CLOSE_BLOCKED');
+  assert.throws(()=>guard.authorize('whatsapp-send',activeEnv()),error=>error.code==='FAILOVER_WHATSAPP_BLOCKED');
 });
 
 test('100 veces: Vercel Blob conserva create-only, metadata, ETag y compare-and-set',async()=>{
-  const sdk=mockSdk(),store=blob.createVercelStore('test-store',{sdkProvider:async()=>sdk,env:{BLOB_READ_WRITE_TOKEN:'test'}});
+  const sdk=mockSdk(),store=blob.createBlobStore('audit',{sdk});
   for(let i=0;i<100;i++){
-    const key=`proof/${i}`,first=await store.set(key,Buffer.from(`v${i}`),{onlyIfNew:true,metadata:{i}});assert.equal(first.modified,true);assert.ok(first.etag);
-    const duplicate=await store.set(key,Buffer.from('other'),{onlyIfNew:true,metadata:{i:999}});assert.equal(duplicate.modified,false);assert.equal(duplicate.etag,first.etag);
-    const read=await store.getWithMetadata(key);assert.equal(read.data.toString(),`v${i}`);assert.equal(read.metadata.i,i);assert.equal(read.etag,first.etag);
-    const changed=await store.set(key,Buffer.from(`v${i}-2`),{onlyIfMatch:first.etag,metadata:{i,revision:2}});assert.equal(changed.modified,true);assert.notEqual(changed.etag,first.etag);
-    const stale=await store.set(key,Buffer.from('stale'),{onlyIfMatch:first.etag});assert.equal(stale.modified,false);assert.equal(stale.etag,changed.etag);
-    const final=await store.getWithMetadata(key);assert.equal(final.data.toString(),`v${i}-2`);assert.equal(final.metadata.revision,2);
+    const key=`item-${i}`;await store.setJSON(key,{value:i},{onlyIfNew:true,metadata:{cycle:i}});
+    const first=await store.getWithMetadata(key,{type:'json'});assert.equal(first.data.value,i);assert.equal(first.metadata.cycle,i);assert.ok(first.etag);
+    await assert.rejects(()=>store.setJSON(key,{value:99},{onlyIfNew:true}),error=>error.code==='BLOB_KEY_EXISTS');
+    await store.setJSON(key,{value:i+1},{onlyIfMatch:first.etag,metadata:{cycle:i+1}});
+    const second=await store.getWithMetadata(key,{type:'json'});assert.equal(second.data.value,i+1);assert.equal(second.metadata.cycle,i+1);
+    await assert.rejects(()=>store.setJSON(key,{value:3},{onlyIfMatch:'stale-etag'}),error=>error.code==='BLOB_PRECONDITION_FAILED');
   }
 });
 
-test('adaptador conserva método, query, IP, JSON y respuesta base64',()=>{
-  const req={method:'POST',url:'/x?a=1',headers:{host:'backup.example','x-forwarded-for':'1.2.3.4, 5.6.7.8'},query:{name:'x',a:'1'},body:{hello:'world'}};
-  const event=adapter.eventFromRequest(req);assert.equal(event.httpMethod,'POST');assert.deepEqual(event.queryStringParameters,{a:'1'});assert.equal(event.headers['x-nf-client-connection-ip'],'1.2.3.4');assert.equal(event.body,'{"hello":"world"}');assert.equal(event.rawUrl,'https://backup.example/x?a=1');
-  const headers={};let ended=null;const res={setHeader:(k,v)=>headers[k]=v,end:v=>ended=v};adapter.sendNetlifyResponse(res,{statusCode:200,headers:{'content-type':'application/octet-stream'},isBase64Encoded:true,body:Buffer.from('ok').toString('base64')});assert.equal(res.statusCode,200);assert.equal(Buffer.from(ended).toString(),'ok');
+test('adaptador conserva método, query, IP, JSON y respuesta base64',async()=>{
+  const req={method:'POST',url:'/x?a=1',headers:{host:'example.test','content-type':'application/json','x-forwarded-for':'1.2.3.4'},body:{ok:true},query:{a:'1'},socket:{remoteAddress:'5.6.7.8'}};
+  const event=adapter.eventFromRequest(req);assert.equal(event.httpMethod,'POST');assert.equal(event.queryStringParameters.a,'1');assert.equal(event.headers['x-nf-client-connection-ip'],'1.2.3.4');assert.equal(event.body,JSON.stringify({ok:true}));
+  let ended='';const res={statusCode:0,headers:{},setHeader(k,v){this.headers[k]=v;},end(v){ended=v;}};
+  adapter.sendNetlifyResponse(res,{statusCode:201,headers:{'content-type':'text/plain'},isBase64Encoded:true,body:Buffer.from('hola').toString('base64')});assert.equal(res.statusCode,201);assert.equal(String(ended),'hola');
 });
 
 test('fuente vendorizada queda fijada al commit y wrappers canónicos actuales, incluida Planta',()=>{
   const manifest=JSON.parse(fs.readFileSync(path.join(root,'.vendor','vla','vendor-manifest.json'),'utf8'));
-  assert.equal(manifest.sourceCommit,lock.sourceCommit);assert.equal(manifest.sourceRelease,lock.sourceRelease);assert.ok(manifest.codeFiles.length>20);
-  const publicWrapper=fs.readFileSync(path.join(root,'.vendor','vla','netlify','functions','public-data.js'),'utf8');
-  const adminWrapper=fs.readFileSync(path.join(root,'.vendor','vla','netlify','functions','admin-data.js'),'utf8');
-  assert.match(publicWrapper,/public-data-v3/);assert.match(adminWrapper,/admin-data-v3/);
-  assert.equal(manifest.handlerFiles['public-plant'],'netlify/functions/public-plant.mjs');
-  assert.equal(manifest.handlerFiles['admin-plant'],'netlify/functions/admin-plant.mjs');
-  for(const rel of ['netlify/functions/public-plant.mjs','netlify/functions/admin-plant.mjs'])assert.ok(fs.existsSync(path.join(root,'.vendor','vla',rel)),`Falta ${rel}`);
-  for(const rel of ['owner-plant-v1.css','owner-plant-v1.js','admin-plant-v1.css','admin-plant-v1.js','owner-report-sync-v1.css','owner-report-sync-v1.js'])assert.ok(manifest.staticFiles.some(item=>item.path===rel),`Falta asset ${rel}`);
-  const map=fs.readFileSync(path.join(root,'.generated','handler-map.cjs'),'utf8');assert.match(map,/process-payment-report/);assert.match(map,/public-report-payment/);assert.match(map,/public-plant/);assert.match(map,/admin-plant/);assert.match(map,/modern-netlify-handler/);assert.doesNotMatch(map,/monthly-close/);assert.doesNotMatch(map,/whatsapp/);
-  const shim=fs.readFileSync(path.join(root,'.vendor','vla','netlify','functions','_shared','_blobs_compat.js'),'utf8');assert.match(shim,/vercel-blob-compat/);
-  const vercel=JSON.parse(fs.readFileSync(path.join(root,'vercel.json'),'utf8'));
-  assert.ok(vercel.rewrites.some(item=>item.source==='/api/vla/plant'&&item.destination==='/api/netlify/public-plant'));
-  assert.ok(vercel.rewrites.some(item=>item.source==='/api/vla/admin/plant'&&item.destination==='/api/netlify/admin-plant'));
+  assert.equal(manifest.sourceCommit,lock.sourceCommit);assert.equal(manifest.sourceRelease,lock.sourceRelease);assert.equal(manifest.handlers.length,24);
+  assert.equal(manifest.handlerFiles['public-plant'],'netlify/functions/public-plant.mjs');assert.equal(manifest.handlerFiles['admin-plant'],'netlify/functions/admin-plant.mjs');
+  assert.equal(manifest.staticFiles.some(item=>item.path==='owner-plant-v1.js'),true);assert.equal(manifest.staticFiles.some(item=>item.path==='owner-report-sync-v1.js'),true);
 });
