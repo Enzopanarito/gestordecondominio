@@ -2,7 +2,7 @@
   "schema": "vla-failover-source-lock-v1",
   "sourceRepository": "Enzopanarito/portaldelpropietario",
   "sourceCommit": "da32391ec9964bd8f09f1e5e5b1ea47bd8d7cbac",
-  "sourceRelease": "2026-08-22-v16",
+  "sourceRelease": "2026-08-21-v15",
   "productionBaseId": "app4nE4ReGRi2SuP2",
   "stagingBaseId": "appZhq8nVZ7lZ2k6K",
   "expectedHouses": 15,
