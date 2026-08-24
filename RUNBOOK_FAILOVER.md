@@ -7,7 +7,7 @@ Nunca ejecutar cierre mensual, WhatsApp programado ni schedulers duplicados desd
 
 ## 1. Identidad certificada
 - Fuente VLA: `Enzopanarito/portaldelpropietario`
-- Commit fijado: `a06b9a18fa08ba2283fd645444252e14e9ae2871`
+- Commit fijado: `d0a858ac26c773f9186e43f0e3c0538be1926a07`
 - Release: `2026-08-21-v15`
 - Producción Airtable: `app4nE4ReGRi2SuP2`
 - Staging ficticio: `appZhq8nVZ7lZ2k6K`
