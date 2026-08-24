@@ -31,7 +31,7 @@ function mockSdk(){
 }
 
 test('source lock apunta al commit productivo exacto y release v15 auditado',()=>{
-  assert.equal(lock.sourceCommit,'a06b9a18fa08ba2283fd645444252e14e9ae2871');
+  assert.equal(lock.sourceCommit,'d0a858ac26c773f9186e43f0e3c0538be1926a07');
   assert.equal(lock.sourceRelease,'2026-08-21-v15');
 });
 
