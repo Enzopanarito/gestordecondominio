@@ -11,15 +11,18 @@ Mantener operativo el núcleo de Villa Los Apamates si Netlify queda indisponibl
 
 ## Superficies operativas incluidas
 1. Portal propietario y lectura de saldos.
-2. Login administrativo y lectura Admin.
+2. Login administrativo, recuperación de contraseña y lectura Admin.
 3. Reporte de pago y seguimiento del reporte.
 4. Lectura de comprobantes y complemento.
 5. Aprobación, aprobación por excepción, corrección y rechazo de reportes.
 6. Pago manual administrativo.
-7. Emisión/reenvío de recibos.
-8. BCV requerido por los flujos de pago.
-9. Lectura de estado de acceso y operaciones MKJ necesarias durante contingencia.
-10. Salud específica del failover.
+7. Supervisión de autopagos, con reversión protegida como escritura.
+8. Gastos administrativos y ciclo de gastos recurrentes, siempre sujetos al guard de escritura.
+9. Emisión/reenvío de recibos.
+10. BCV requerido por los flujos de pago.
+11. Lectura de estado de acceso y operaciones MKJ necesarias durante contingencia.
+12. Índice de Puntualidad VLA como superficie estrictamente read-only.
+13. Salud específica del failover.
 
 ## Exclusiones intencionales v1
 - WhatsApp: sigue siendo un runtime externo separado; no se migra, modifica ni duplica.
@@ -31,6 +34,8 @@ Mantener operativo el núcleo de Villa Los Apamates si Netlify queda indisponibl
 - El modo predeterminado es `disabled`.
 - `staging`: permite escrituras únicamente si `AIRTABLE_BASE_ID` coincide exactamente con `appZhq8nVZ7lZ2k6K`.
 - `active`: se reservará para contingencia real y exige una activación explícita por variables seguras; nunca se usa en CI.
+- Historial de autopagos es lectura por GET y escritura protegida por POST.
+- Gastos y acciones de recurrencia son escrituras protegidas.
 - Si la configuración no es inequívoca, el backend falla cerrado.
 
 ## Almacenamiento
@@ -44,10 +49,13 @@ No se considera terminado hasta cumplir todo:
 - despliegue Vercel independiente;
 - URL de contingencia comprobada;
 - lectura de 15/15 casas;
-- login;
+- login y recuperación de contraseña;
 - reporte de pago;
 - pago manual;
 - aprobar/rechazar;
+- supervisión de autopagos;
+- gastos recurrentes;
+- Índice de Puntualidad read-only;
 - recibos;
 - acceso;
 - prueba de que WhatsApp y cierre mensual no se duplican;

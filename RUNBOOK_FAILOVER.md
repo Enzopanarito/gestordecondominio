@@ -7,11 +7,13 @@ Nunca ejecutar cierre mensual, WhatsApp programado ni schedulers duplicados desd
 
 ## 1. Identidad certificada
 - Fuente VLA: `Enzopanarito/portaldelpropietario`
-- Commit fijado: `d0a858ac26c773f9186e43f0e3c0538be1926a07`
+- Commit fijado: `8177b21d43020efbb893e10c6b9f31bdcdb20171`
 - Release: `2026-08-21-v15`
 - Producción Airtable: `app4nE4ReGRi2SuP2`
 - Staging ficticio: `appZhq8nVZ7lZ2k6K`
 - Casas esperadas: 15
+
+La sincronización 26-Ago-2026 incorpora la paridad operativa añadida desde el lock anterior: gastos recurrentes, supervisión de autopagos, recuperación de contraseña e Índice de Puntualidad de solo lectura, además de las correcciones vigentes de prelectura/IA de pagos. El cierre mensual y WhatsApp continúan excluidos por contrato.
 
 Antes de cualquier activación, `failover-health` debe mostrar exactamente ese commit/release.
 
@@ -82,6 +84,9 @@ Con `VLA_FAILOVER_WRITE_MODE=disabled`:
 - Admin carga sin Edge Functions Netlify.
 - `public-data` devuelve 15/15 casas ficticias.
 - login funciona.
+- Índice de Puntualidad carga como lectura y no modifica datos.
+- historial de autopagos permite GET pero bloquea reversión POST.
+- gastos recurrentes se muestran, pero crear/editar/detener repetición queda bloqueado mientras writes=disabled.
 - endpoints de escritura devuelven bloqueo fail-closed.
 - cualquier ruta `monthly-close*` devuelve bloqueo explícito.
 - cualquier ruta `whatsapp*` devuelve bloqueo explícito.
@@ -93,10 +98,11 @@ Después cambiar únicamente STAGING a `VLA_FAILOVER_WRITE_MODE=staging` y ejecu
 4. rechazar otro reporte;
 5. corregir/revisión por excepción;
 6. pago manual;
-7. comprobar efecto contable esperado;
-8. comprobar preservación USD/Bs sin compensación cruzada;
-9. recibo sin envío real externo no autorizado;
-10. acceso en modo seguro, sin tocar la organización MKJ real.
+7. crear/editar/anular un gasto recurrente ficticio y comprobar su continuidad mensual;
+8. comprobar efecto contable esperado;
+9. comprobar preservación USD/Bs sin compensación cruzada;
+10. recibo sin envío real externo no autorizado;
+11. acceso en modo seguro, sin tocar la organización MKJ real.
 
 Antes y después de la matriz guardar snapshot de las 15 casas STAGING y reconciliar cada cambio con las operaciones ficticias ejecutadas.
 
@@ -145,7 +151,7 @@ Cuando Netlify vuelva a estar operativo:
 Como ambos entornos usan la misma fuente de datos en una contingencia real, no debe existir una “migración de saldos” al regresar. El control es reconciliación, no copia de cifras.
 
 ## 9. Prohibiciones
-- No reutilizar `gemini-proxy-seinca`.
+- No reutilizar `gemini-proxy-seinca` como infraestructura propia del failover. Los módulos vendorizados pueden conservar el contrato productivo de fallback, pero una certificación STAGING no debe apuntar a servicios externos reales sin autorización explícita.
 - No poner producción Airtable en modo `staging`.
 - No ejecutar schedulers duplicados.
 - No habilitar WhatsApp desde Vercel.
