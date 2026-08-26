@@ -10,11 +10,12 @@ const rawBase=`https://raw.githubusercontent.com/${lock.sourceRepository}/${lock
 
 export const HANDLERS=Object.freeze([
   'public-data','login','admin-data','admin-security','admin-manual-payment',
+  'admin-expense','admin-expense-action','admin-autopay-history',
   'public-report-payment','public-payment-report-status','public-payment-report-supplement',
   '_admin_payment_proof','payment-proof-prefill','payment-report-analyzer-background',
   'process-payment-report','send-receipt','resend-receipt','receipt-recovery-background',
   'mkj-access','access-mode','access-auto-sync','access-reconciliation-readonly',
-  'bcv-rate','system-health','app-icon','public-plant','admin-plant'
+  'bcv-rate','system-health','app-icon','public-punctuality-score','public-plant','admin-plant'
 ]);
 const HANDLER_FILES=Object.freeze({
   'public-plant':'netlify/functions/public-plant.mjs',
@@ -24,7 +25,8 @@ const HANDLER_FILES=Object.freeze({
 export const PUBLIC_FILES=Object.freeze([
   'index.html','admin.html','audit.html','auditoria.html','cierre-auditoria.html',
   'mkj-access.html','seguridad.html','verificar-respaldo.html','whatsapp.html',
-  'admin-autopilot.css','admin-autopilot.js','admin-feature-parity.js',
+  'admin-autopilot.css','admin-autopilot.js','admin-feature-parity.js','admin-recurring-expenses.js',
+  'admin-autopay-supervision.css','admin-autopay-supervision.js',
   'admin-plant-v1.css','admin-plant-v1.js','admin-owner-access-v1.js','admin-premium-10.css','admin-premium-10.js',
   'admin-payment-review-v10.css','admin-payment-review-v10.js',
   'admin-premium-controls.js','admin-premium-polish.css','admin-premium-preflight.js',
@@ -32,7 +34,8 @@ export const PUBLIC_FILES=Object.freeze([
   'admin-session-bridge.js','owner-current-month-v1.css','owner-current-month-v1.js',
   'owner-dark-contrast-v1.css','owner-mobile-v2-layout-fix.css','owner-mobile-v2.css',
   'owner-plant-v1.css','owner-plant-v1.js','owner-payment-report-v3.css','owner-payment-report-v3.js',
-  'owner-report-sync-v1.css','owner-report-sync-v1.js','owner-breakdown-v7.css','owner-breakdown-v7.js',
+  'owner-report-sync-v1.css','owner-report-sync-v1.js','owner-punctuality-score-v1.css','owner-punctuality-score-v1.js',
+  'owner-breakdown-v7.css','owner-breakdown-v7.js',
   'payment-report-intelligence.js','vla-finance-v7.js','pwa-register.js','release.json','service-worker.js'
 ]);
 
