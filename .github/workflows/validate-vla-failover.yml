@@ -51,7 +51,7 @@ jobs:
           ADMIN_PASSWORD: test-password-not-used
           ADMIN_TOKEN_SECRET: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           PAYMENT_PROOF_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        run: node -e "const h=require('./.generated/handler-map.cjs'); if(Object.keys(h).length!==24) throw new Error('HANDLER_COUNT_'+Object.keys(h).length); console.log('FAILOVER_HANDLER_LOAD_OK',Object.keys(h).length)"
+        run: node -e "const h=require('./.generated/handler-map.cjs'); if(Object.keys(h).length!==28) throw new Error('HANDLER_COUNT_'+Object.keys(h).length); for(const n of ['admin-expense','admin-expense-action','admin-autopay-history','public-punctuality-score']) if(!h[n]) throw new Error('HANDLER_MISSING_'+n); console.log('FAILOVER_HANDLER_LOAD_OK',Object.keys(h).length)"
 
       - name: Run failover contract including 100x cycles
         run: node --test tests/*.test.js
@@ -70,7 +70,10 @@ jobs:
           test -s dist/admin.html
           test -s dist/tailwind.generated.css
           grep -q 'vla-owner-mobile-v2' dist/index.html
+          grep -q 'vla-owner-punctuality-score-v1' dist/index.html
           grep -q 'vla-admin-premium-v1' dist/admin.html
+          grep -q 'vla-admin-autopay-supervision' dist/admin.html
+          grep -q 'vla-admin-forgot-password' dist/admin.html
           grep -q 'vla-admin-boot-style' dist/admin.html
           grep -q 'vla-failover-runtime' dist/index.html
           grep -q 'vla-failover-runtime' dist/admin.html
