@@ -96,7 +96,7 @@ function writeHandlerMap(){
   const lines=["'use strict';","const map=Object.create(null);","const modern=require('../lib/modern-netlify-handler.cjs');"];
   for(const name of HANDLERS){
     if(name==='public-plant'){
-      lines.push(`map[${JSON.stringify(name)}]=modern.createModernHandler('.vendor/vla/netlify/functions/public-plant.mjs');`);
+      lines.push(`map[${JSON.stringify(name)}]=modern.createPublicPlantHandler();`);
       continue;
     }
     if(name==='admin-plant'){
