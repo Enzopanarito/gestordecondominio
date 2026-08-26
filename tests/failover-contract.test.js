@@ -31,7 +31,7 @@ function mockSdk(){
 }
 
 test('source lock apunta al commit productivo exacto y release v15 auditado',()=>{
-  assert.equal(lock.sourceCommit,'d0a858ac26c773f9186e43f0e3c0538be1926a07');
+  assert.equal(lock.sourceCommit,'8177b21d43020efbb893e10c6b9f31bdcdb20171');
   assert.equal(lock.sourceRelease,'2026-08-21-v15');
 });
 
@@ -44,6 +44,20 @@ test('100 veces: defaults ausentes quedan en STAGING exacto y escrituras disable
     assert.equal(read.allowed,true);assert.equal(read.write,false);assert.equal(read.mode,'disabled');assert.equal(read.dataEnv,'staging');assert.equal(read.base,lock.stagingBaseId);
     assert.throws(()=>guard.authorize('public-report-payment',{}),error=>error.code==='FAILOVER_WRITES_DISABLED');
     assert.throws(()=>guard.validateBasePair({VLA_DATA_ENVIRONMENT:'production'}),error=>error.code==='FAILOVER_PRODUCTION_BASE_MISMATCH');
+  }
+});
+
+test('100 veces: nuevas superficies mantienen lectura segura y escrituras bloqueadas por defecto',()=>{
+  for(let i=0;i<100;i++){
+    const punctuality=guard.authorize('public-punctuality-score',disabledStagingEnv(),'GET');
+    assert.equal(punctuality.allowed,true);assert.equal(punctuality.write,false);assert.equal(punctuality.base,lock.stagingBaseId);
+    const history=guard.authorize('admin-autopay-history',disabledStagingEnv(),'GET');
+    assert.equal(history.allowed,true);assert.equal(history.write,false);
+    assert.throws(()=>guard.authorize('admin-autopay-history',disabledStagingEnv(),'POST'),error=>error.code==='FAILOVER_WRITES_DISABLED');
+    for(const name of ['admin-expense','admin-expense-action']){
+      assert.throws(()=>guard.authorize(name,disabledStagingEnv(),'POST'),error=>error.code==='FAILOVER_WRITES_DISABLED');
+      const staged=guard.authorize(name,stagingEnv(),'POST');assert.equal(staged.allowed,true);assert.equal(staged.write,true);assert.equal(staged.base,lock.stagingBaseId);
+    }
   }
 });
 
@@ -144,7 +158,7 @@ test('adaptador conserva método, query, IP, JSON y respuesta base64',()=>{
   const headers={};let ended=null;const res={setHeader:(k,v)=>headers[k]=v,end:v=>ended=v};adapter.sendNetlifyResponse(res,{statusCode:200,headers:{'content-type':'application/octet-stream'},isBase64Encoded:true,body:Buffer.from('ok').toString('base64')});assert.equal(res.statusCode,200);assert.equal(Buffer.from(ended).toString(),'ok');
 });
 
-test('fuente vendorizada queda fijada al commit y wrappers canónicos actuales, incluida Planta',()=>{
+test('fuente vendorizada queda fijada al commit y wrappers canónicos actuales, incluida paridad nueva',()=>{
   const manifest=JSON.parse(fs.readFileSync(path.join(root,'.vendor','vla','vendor-manifest.json'),'utf8'));
   assert.equal(manifest.sourceCommit,lock.sourceCommit);assert.equal(manifest.sourceRelease,lock.sourceRelease);assert.ok(manifest.codeFiles.length>20);
   const publicWrapper=fs.readFileSync(path.join(root,'.vendor','vla','netlify','functions','public-data.js'),'utf8');
@@ -152,9 +166,10 @@ test('fuente vendorizada queda fijada al commit y wrappers canónicos actuales, 
   assert.match(publicWrapper,/public-data-v3/);assert.match(adminWrapper,/admin-data-v3/);
   assert.equal(manifest.handlerFiles['public-plant'],'netlify/functions/public-plant.mjs');
   assert.equal(manifest.handlerFiles['admin-plant'],'netlify/functions/admin-plant.mjs');
+  for(const name of ['admin-expense','admin-expense-action','admin-autopay-history','public-punctuality-score'])assert.ok(manifest.handlers.includes(name),`Falta handler ${name}`);
   for(const rel of ['netlify/functions/public-plant.mjs','netlify/functions/admin-plant.mjs'])assert.ok(fs.existsSync(path.join(root,'.vendor','vla',rel)),`Falta ${rel}`);
-  for(const rel of ['owner-plant-v1.css','owner-plant-v1.js','admin-plant-v1.css','admin-plant-v1.js','owner-report-sync-v1.css','owner-report-sync-v1.js'])assert.ok(manifest.staticFiles.some(item=>item.path===rel),`Falta asset ${rel}`);
-  const map=fs.readFileSync(path.join(root,'.generated','handler-map.cjs'),'utf8');assert.match(map,/process-payment-report/);assert.match(map,/public-report-payment/);assert.match(map,/public-plant/);assert.match(map,/admin-plant/);assert.match(map,/modern-netlify-handler/);assert.doesNotMatch(map,/monthly-close/);assert.doesNotMatch(map,/whatsapp/);
+  for(const rel of ['owner-plant-v1.css','owner-plant-v1.js','admin-plant-v1.css','admin-plant-v1.js','owner-report-sync-v1.css','owner-report-sync-v1.js','admin-recurring-expenses.js','admin-autopay-supervision.css','admin-autopay-supervision.js','owner-punctuality-score-v1.css','owner-punctuality-score-v1.js'])assert.ok(manifest.staticFiles.some(item=>item.path===rel),`Falta asset ${rel}`);
+  const map=fs.readFileSync(path.join(root,'.generated','handler-map.cjs'),'utf8');assert.match(map,/process-payment-report/);assert.match(map,/public-report-payment/);assert.match(map,/public-punctuality-score/);assert.match(map,/admin-autopay-history/);assert.match(map,/admin-expense-action/);assert.match(map,/public-plant/);assert.match(map,/admin-plant/);assert.match(map,/modern-netlify-handler/);assert.doesNotMatch(map,/monthly-close/);assert.doesNotMatch(map,/whatsapp/);
   const shim=fs.readFileSync(path.join(root,'.vendor','vla','netlify','functions','_shared','_blobs_compat.js'),'utf8');assert.match(shim,/vercel-blob-compat/);
   const vercel=JSON.parse(fs.readFileSync(path.join(root,'vercel.json'),'utf8'));
   assert.ok(vercel.rewrites.some(item=>item.source==='/api/vla/plant'&&item.destination==='/api/netlify/public-plant'));
